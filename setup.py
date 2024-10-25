@@ -1,10 +1,10 @@
 from setuptools import setup, Extension
 import os
 
-extension = Extension('xxtea', ['xxtea.c'])
+extension = Extension('cxxtea', ['cxxtea.c'])
 
 setup(
-    name="xxtea",
+    name="cxxtea",
     version="1.0.2",
     author='wood',
     author_email='miraclerinwood@gmail.com',
@@ -13,7 +13,7 @@ setup(
     long_description=open('README.md', 'rb').read().decode('utf8'),
 	long_description_content_type='text/markdown',
     license="BSD",
-    keywords="xxtea",
+    keywords="cxxtea",
     ext_modules=[extension],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
