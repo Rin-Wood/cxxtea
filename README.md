@@ -1,6 +1,6 @@
 # cxxtea
 
-`cxxtea` is a Python package for decrypting data, using a custom XXTEA decryption algorithm implemented in C, and supporting ABI3-compatible wheels for multiple operating systems and architectures.
+`cxxtea` is a Python package for decrypting data, using a custom XXTEA decryption algorithm implemented in C.
 
 ## Features
 
