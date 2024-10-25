@@ -8,7 +8,7 @@ setup(
     version="1.0.2",
     author='wood',
     author_email='miraclerinwood@gmail.com',
-    url='https://github.com/ifduyue/cxxtea',
+    url='https://github.com/Rin-Wood/cxxtea',
     description="cxxtea is a simple block cipher implemented in C",
     long_description=open('README.md', 'rb').read().decode('utf8'),
 	long_description_content_type='text/markdown',
