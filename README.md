@@ -21,13 +21,8 @@ Here's how to use `cxxtea` for decryption:
 ```python
 import cxxtea
 
-# Your data and key
 data = b'...your encrypted data...'
 sign = b'...your encryption sign...'
 key = b'...your encryption key...'
 
-# Decrypting the data
 dec = cxxtea.decrypt(data, sign, key)
-
-# Print the decrypted data
-print(dec)
