@@ -13,3 +13,9 @@ Install the latest version of `cxxtea` from PyPI:
 
 ```bash
 pip install cxxtea
+
+## Usage
+```python
+.. code-block:: Python
+import xxtea
+dec = xxtea.decrypt(data, key)
