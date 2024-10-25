@@ -13,5 +13,3 @@ Install the latest version of `cxxtea` from PyPI:
 
 ```bash
 pip install cxxtea
-
-
