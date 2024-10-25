@@ -1,6 +1,10 @@
 name: Build & Publish wheels
 on:
-  workflow_dispatch
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
 
 
 jobs:
