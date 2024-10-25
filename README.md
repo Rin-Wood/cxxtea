@@ -5,8 +5,7 @@
 ## Features
 
 - Provides efficient XXTEA decryption functionality, based on C implementation.
-- Supports Python 3.7+, and uses the [Python Limited API (abi3)](https://docs.python.org/3/c-api/stable.html) to ensure compatibility of binary wheels across multiple Python versions.
-- Automatically build and publish via GitHub Actions, supporting Windows, macOS, and Linux (including musllinux and manylinux).
+- Supports Python 3.6+
 
 ## Installation
 
