@@ -5,7 +5,7 @@ extension = Extension('cxxtea', ['cxxtea.c'])
 
 setup(
     name="cxxtea",
-    version="1.0.4",
+    version="1.0.5",
     author='wood',
     author_email='miraclerinwood@gmail.com',
     url='https://github.com/Rin-Wood/cxxtea',
