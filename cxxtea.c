@@ -36,8 +36,9 @@ typedef uint8_t byte;
 typedef uint32_t uint;
 
 static PyObject* _long2bytes(uint* v, int length, int w) {
-    int n = (length - 1) << 2;
+    int n = length << 2;
     if (w) {
+        n = (length - 1) << 2;
         int m = v[length - 1];
         if ((m < n - 3) || (m > n)) {
             Py_RETURN_NONE;
