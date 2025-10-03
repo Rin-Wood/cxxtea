@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2024, Wood
+ * Copyright (c) 2015-2025, Wood
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -35,83 +35,147 @@
 typedef uint8_t byte;
 typedef uint32_t uint;
 
-static PyObject* _long2bytes(uint* v, int length, int w) {
-    int n = length << 2;
-    if (w) {
-        n = (length - 1) << 2;
-        int m = v[length - 1];
-        if ((m < n - 3) || (m > n)) {
-            Py_RETURN_NONE;
+static uint* bytes2long(const char* s, int dataLen, int* arrLen, int littleEndian, int fill) {
+    uint i, count, count2;
+    const byte* buff = (const byte*)s;
+    byte* tmp = NULL;
+    count = dataLen / 4;
+    count2 = dataLen % 4;
+    if (count2 != 0) {
+        count += 1;
+        if (fill <= 0) {
+            fill = count * 4;
+        } else {
+            count = fill / 4;
         }
-        n = m;
     }
-
-    PyObject* result = PyBytes_FromStringAndSize(NULL, n);
-    if (!result) return NULL;
-
-    byte* s = (byte*)PyBytes_AsString(result);
-    if (!s) {
-        Py_DECREF(result);
+    *arrLen = count;
+    uint* dst = (uint*)malloc(count * sizeof(uint));
+    if (!dst) {
+        if (tmp) free(tmp);
         return NULL;
     }
-    memcpy(s, v, n);
+    if (fill > 0) {
+        tmp = (byte*)malloc(fill);
+        if (!tmp) {
+            free(dst);
+            return NULL;
+        }
+        if (dataLen >= fill) {
+            memcpy(tmp, s, fill);
+        } else {
+            memcpy(tmp, s, dataLen);
+            memset(tmp + dataLen, 0, fill - dataLen);
+        }
+        buff = tmp;
+        count = fill / 4;
+    }
+    if (littleEndian) {
+        for (i = 0; i < count; i++) {
+            dst[i] = (uint)buff[i*4] | ((uint)buff[i*4 + 1] << 8) | ((uint)buff[i*4 + 2] << 16) | ((uint)buff[i*4 + 3] << 24);
+        }
+    } else {
+        for (i = 0; i < count; i++) {
+            dst[i] = ((uint)buff[i*4] << 24) | ((uint)buff[i*4 + 1] << 16) | ((uint)buff[i*4 + 2] << 8) | (uint)buff[i*4 + 3];
+        }
+    }
+    if (tmp) free(tmp);
+    return dst;
+}
 
+static PyObject* long2bytes(uint* dst, int length, int littleEndian, int cut) {
+    int i;
+    uint u;
+    size_t cutLen = length << 2;
+    if (cut) {
+        cutLen = (length - 1) << 2;
+        size_t newLen = dst[length - 1];
+        if ((newLen < cutLen - 3) || (newLen > cutLen)) {
+            Py_RETURN_NONE;
+        }
+        cutLen = newLen;
+    }
+    byte* rBytes = (byte*)malloc(length * 4);
+    if (!rBytes) {
+        free(rBytes);
+        Py_RETURN_NONE;
+    }
+    if (littleEndian) {
+        for (i = 0; i < length; i++) {
+            u = dst[i];
+            rBytes[i*4] = (byte)u;
+            rBytes[i*4 + 1] = (byte)(u >> 8);
+            rBytes[i*4 + 2] = (byte)(u >> 16);
+            rBytes[i*4 + 3] = (byte)(u >> 24);
+        }
+    } else {
+        for (i = 0; i < length; i++) {
+            u = dst[i];
+            rBytes[i*4] = (byte)(u >> 24);
+            rBytes[i*4 + 1] = (byte)(u >> 16);
+            rBytes[i*4 + 2] = (byte)(u >> 8);
+            rBytes[i*4 + 3] = (byte)u;
+        }
+    }
+    PyObject* result = PyBytes_FromStringAndSize((const char*)rBytes, cutLen);
+    if (!result) Py_RETURN_NONE;
+    free(rBytes);
     return result;
 }
 
-static uint* _bytes2long(const char* s, int len, int* out_len) {
-    int m = ((4 - (len & 3)) & 3) + len;
-    uint* v = (uint*)malloc(m);
-    if (!v) return NULL;
-    memcpy(v, s, len);
-    memset((char*)v + len, 0, m - len);
-
-    *out_len = m >> 2;
-    return v;
-}
-
 static PyObject* decrypt(PyObject* self, PyObject* args) {
-    const char *data_buf, *sign_buf, *key_buf;
-    Py_ssize_t dlen, slen, klen;
-    uint _DELTA = 0x9e3779b9;
-    int delend = 1;
+    const char *dataBuff, *signBuff, *keyBuff;
+    Py_ssize_t dLen, sLen, kLen;
     uint y, z, sum;
-    int p, e, v_len, k_len, n, q;
+    int p, e, vLen, kLen2, n, q;
     uint* v = NULL;
     uint* k = NULL; 
+    uint _DELTA = 0x9e3779b9;
+    int cut = 1;
+    int inputLittleEndian = 1;
+    int outputLittleEndian = 1;
 
     PyObject *result = NULL;
 
-    if (!PyArg_ParseTuple(args, "y#y#y#|Ip", 
-                          &data_buf, &dlen, 
-                          &sign_buf, &slen, 
-                          &key_buf, &klen, 
-                          &_DELTA, &delend))
+    if (!PyArg_ParseTuple(args, "y#y#y#|Iiii", 
+                          &dataBuff, &dLen, 
+                          &signBuff, &sLen, 
+                          &keyBuff, &kLen, 
+                          &_DELTA, &cut,
+                          &inputLittleEndian, &outputLittleEndian))
         return NULL;
+    printf("dataBuff length: %ld\n", (long)dLen);
+    printf("signBuff length: %ld\n", (long)sLen);
+    printf("keyBuff length: %ld\n", (long)kLen);
+    printf("_DELTA: %u\n", _DELTA);
+    printf("cut: %s\n", cut ? "True" : "False");
+    printf("inputLittleEndian: %s\n", inputLittleEndian ? "True" : "False");
+    printf("outputLittleEndian: %s\n", outputLittleEndian ? "True" : "False");
+	fflush(stdout);
 
-    if (dlen == 0) {
+    if (dLen == 0) {
         result = PyBytes_FromStringAndSize("", 0);
         goto cleanup;
     }
 
-    if (slen > 0 && (dlen < slen || memcmp(data_buf, sign_buf, slen) != 0)) {
+    if (sLen > 0 && (dLen < sLen || memcmp(dataBuff, signBuff, sLen) != 0)) {
         result = PyBytes_FromStringAndSize("", 0);
         goto cleanup;
     }
 
-    v = _bytes2long(data_buf + slen, dlen - slen, &v_len);
+    v = bytes2long(dataBuff + sLen, dLen - sLen, &vLen, inputLittleEndian, 0);
     if (!v) {
         result = PyBytes_FromStringAndSize("", 0);
         goto cleanup;
     }
 
-    k = _bytes2long(key_buf, 16, &k_len);
+    k = bytes2long(keyBuff, kLen, &kLen2, inputLittleEndian, 16);
     if (!k) {
         result = PyBytes_FromStringAndSize("", 0);
         goto cleanup;
     }
 
-    n = v_len - 1;
+    n = vLen - 1;
     y = v[0];
     q = 6 + 52 / (n + 1);
     sum = q * _DELTA;
@@ -129,7 +193,7 @@ static PyObject* decrypt(PyObject* self, PyObject* args) {
         sum -= _DELTA;
     } while (--q);
 
-    result = _long2bytes(v, v_len, delend);
+    result = long2bytes(v, vLen, outputLittleEndian, cut);
 
 cleanup:
     if (v) free(v);
