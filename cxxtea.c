@@ -144,14 +144,6 @@ static PyObject* decrypt(PyObject* self, PyObject* args) {
                           &_DELTA, &cut,
                           &inputLittleEndian, &outputLittleEndian))
         return NULL;
-    printf("dataBuff length: %ld\n", (long)dLen);
-    printf("signBuff length: %ld\n", (long)sLen);
-    printf("keyBuff length: %ld\n", (long)kLen);
-    printf("_DELTA: %u\n", _DELTA);
-    printf("cut: %s\n", cut ? "True" : "False");
-    printf("inputLittleEndian: %s\n", inputLittleEndian ? "True" : "False");
-    printf("outputLittleEndian: %s\n", outputLittleEndian ? "True" : "False");
-	fflush(stdout);
 
     if (dLen == 0) {
         result = PyBytes_FromStringAndSize("", 0);
@@ -218,3 +210,4 @@ static struct PyModuleDef cxxteamodule = {
 PyMODINIT_FUNC PyInit_cxxtea(void) {
     return PyModule_Create(&cxxteamodule);
 }
+
