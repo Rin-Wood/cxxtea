@@ -24,5 +24,9 @@ import cxxtea
 data = b'...your encrypted data...'
 sign = b'...your encryption sign...'
 key = b'...your encryption key...'
+delta = 0x9e3779b9
+cut = 1
+inputLittleEndian = 1
+outputLittleEndian = 1
 
-dec = cxxtea.decrypt(data, sign, key)
+dec = cxxtea.decrypt(data, sign, key, delta, cut, inputLittleEndian, outputLittleEndian)
