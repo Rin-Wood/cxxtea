@@ -123,7 +123,7 @@ static PyObject* long2bytes(uint* dst, int length, int littleEndian, int cut) {
     return result;
 }
 
-static PyObject* encrypt(PyObject* self, PyObject* args) {
+static PyObject* pyEncrypt(PyObject* self, PyObject* args) {
     const char *dataBuff, *signBuff, *keyBuff;
     char *outBuff;
     Py_ssize_t dLen, sLen, kLen, eLen;
@@ -222,7 +222,7 @@ cleanup:
     return result;
 }
 
-static PyObject* decrypt(PyObject* self, PyObject* args) {
+static PyObject* pyDecrypt(PyObject* self, PyObject* args) {
     const char *dataBuff, *signBuff, *keyBuff;
     Py_ssize_t dLen, sLen, kLen;
     uint y, z, sum;
@@ -294,8 +294,8 @@ cleanup:
 }
 
 static PyMethodDef CxxteaMethods[] = {
-    {"encrypt", (PyCFunction)encrypt, METH_VARARGS, "Encrypt XXTEA"},
-    {"decrypt", (PyCFunction)decrypt, METH_VARARGS, "Decrypt XXTEA"},
+    {"encrypt", (PyCFunction)pyEncrypt, METH_VARARGS, "Encrypt XXTEA"},
+    {"decrypt", (PyCFunction)pyDecrypt, METH_VARARGS, "Decrypt XXTEA"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -310,4 +310,3 @@ static struct PyModuleDef cxxteamodule = {
 PyMODINIT_FUNC PyInit_cxxtea(void) {
     return PyModule_Create(&cxxteamodule);
 }
-
