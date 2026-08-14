@@ -123,6 +123,105 @@ static PyObject* long2bytes(uint* dst, int length, int littleEndian, int cut) {
     return result;
 }
 
+static PyObject* encrypt(PyObject* self, PyObject* args) {
+    const char *dataBuff, *signBuff, *keyBuff;
+    char *outBuff;
+    Py_ssize_t dLen, sLen, kLen, eLen;
+    uint y, z, sum;
+    int p, e, vLen, kLen2, n, q;
+    uint* v = NULL;
+    uint* k = NULL; 
+    uint _DELTA = 0x9e3779b9;
+    int cut = 1;
+    int inputLittleEndian = 1;
+    int outputLittleEndian = 1;
+    PyObject *encBytes;
+
+    PyObject *result = NULL;
+
+    if (!PyArg_ParseTuple(args, "y#y#y#|Iiii", 
+                          &dataBuff, &dLen, 
+                          &signBuff, &sLen, 
+                          &keyBuff, &kLen, 
+                          &_DELTA, &cut,
+                          &inputLittleEndian, &outputLittleEndian))
+        return NULL;
+
+    if (dLen == 0) {
+        result = PyBytes_FromStringAndSize("", 0);
+        goto cleanup;
+    }
+
+    v = bytes2long(dataBuff, dLen, &vLen, inputLittleEndian, 0);
+    if (!v) {
+        result = PyBytes_FromStringAndSize("", 0);
+        goto cleanup;
+    }
+    if (cut) {
+        vLen += 1;
+        uint* newV = (uint*)realloc(v, vLen * sizeof(uint));
+        if (!newV){
+            goto cleanup;
+        }
+        v = newV;
+        v[vLen -1] = (uint)dLen;
+    }
+
+    k = bytes2long(keyBuff, kLen, &kLen2, inputLittleEndian, 16);
+    if (!k) {
+        result = PyBytes_FromStringAndSize("", 0);
+        goto cleanup;
+    }
+
+    n = vLen - 1;
+    if (n >= 1) {
+        q = 6 + 52 / (n + 1);
+        sum = 0;
+        z = v[n];
+        do {
+            sum += _DELTA;
+            e = (sum >> 2) & 3;
+            for (p = 0; p < n; p++) {
+                y = v[p + 1];
+                v[p] += MX;
+                z = v[p];
+            }
+            y = v[0];
+            v[n] += MX;
+            z = v[n];
+        } while (--q);
+    }
+
+    encBytes = long2bytes(v, vLen, outputLittleEndian, 0);
+    if (!encBytes) {
+        result = PyBytes_FromStringAndSize("", 0);
+        goto cleanup;
+    }
+
+    if (sLen > 0) {
+        eLen = PyBytes_Size(encBytes);
+        outBuff = (char*)malloc(sLen + eLen);
+        if (!outBuff) {
+            Py_DECREF(encBytes);
+            result = PyBytes_FromStringAndSize("", 0);
+            goto cleanup;
+        }
+        memcpy(outBuff, signBuff, sLen);
+        memcpy(outBuff + sLen, PyBytes_AsString(encBytes), eLen);
+        result = PyBytes_FromStringAndSize(outBuff, sLen + eLen);
+        free(outBuff);
+        Py_DECREF(encBytes);
+    } else {
+        result = encBytes;
+    }
+
+cleanup:
+    if (v) free(v);
+    if (k) free(k);
+
+    return result;
+}
+
 static PyObject* decrypt(PyObject* self, PyObject* args) {
     const char *dataBuff, *signBuff, *keyBuff;
     Py_ssize_t dLen, sLen, kLen;
@@ -195,6 +294,7 @@ cleanup:
 }
 
 static PyMethodDef CxxteaMethods[] = {
+    {"encrypt", (PyCFunction)encrypt, METH_VARARGS, "Encrypt XXTEA"},
     {"decrypt", (PyCFunction)decrypt, METH_VARARGS, "Decrypt XXTEA"},
     {NULL, NULL, 0, NULL}
 };
