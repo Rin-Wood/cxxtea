@@ -16,6 +16,22 @@ pip install cxxtea
 ```
 
 ## Usage
+Here's how to use `cxxtea` for encryption:
+
+```python
+import cxxtea
+
+data = b'...your encrypted data...'
+sign = b'...your encryption sign...'
+key = b'...your encryption key...'
+delta = 0x9e3779b9 # default 0x9e3779b9
+cut = 1 # default 1(True)
+input_little_endian = 1 # bool # default 1(True)
+output_little_endian = 1 # bool # default 1(True)
+
+enc = cxxtea.encrypt(data, sign, key, delta, cut, input_little_endian, output_little_endian)
+```
+
 Here's how to use `cxxtea` for decryption:
 
 ```python
@@ -30,3 +46,4 @@ input_little_endian = 1 # bool # default 1(True)
 output_little_endian = 1 # bool # default 1(True)
 
 dec = cxxtea.decrypt(data, sign, key, delta, cut, input_little_endian, output_little_endian)
+```
